@@ -1,10 +1,9 @@
 package com.tiny.tinyspringmvc;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class TinySpringmvcApplicationTests {
+import org.junit.Test;
+
+public class TinySpringmvcApplicationTests {
 
     @Test
     void contextLoads() {
