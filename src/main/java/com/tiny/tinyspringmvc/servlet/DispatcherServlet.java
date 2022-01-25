@@ -46,7 +46,9 @@ public class DispatcherServlet extends HttpServlet {
         if(ioc.isEmpty())return;
         for(Map.Entry<String, Object> entry:ioc.entrySet()){
             Class<?> clazz = entry.getValue().getClass();
-            if(!clazz.isAnnotationPresent(Controller.class)){continue;}
+            if(!clazz.isAnnotationPresent(Controller.class)){
+                continue;
+            }
             String baseUrl = "";
             if(clazz.isAnnotationPresent(RequestMapping.class)){
                 RequestMapping requestMapping = clazz.getAnnotation(RequestMapping.class);
@@ -54,7 +56,9 @@ public class DispatcherServlet extends HttpServlet {
             }
             Method[] methods = clazz.getMethods();
             for(Method method:methods){
-                if(!method.isAnnotationPresent(RequestMapping.class)){continue;}
+                if(!method.isAnnotationPresent(RequestMapping.class)){
+                    continue;
+                }
                 RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
                 String url = (baseUrl+requestMapping.value()).replaceAll("/+", "/");
                 Pattern pattern = Pattern.compile(url);
@@ -173,7 +177,9 @@ public class DispatcherServlet extends HttpServlet {
             Map<String, String[]> params = req.getParameterMap();
             for(Map.Entry<String, String[]> param:params.entrySet()){
                 String value = Arrays.toString(param.getValue()).replaceAll("\\[|\\]", "");
-                if(!handler.paramIndexMapping.containsKey(param.getKey())){continue;}
+                if(!handler.paramIndexMapping.containsKey(param.getKey())){
+                    continue;
+                }
                 int index = handler.paramIndexMapping.get(param.getKey());
                 paramValues[index] = convert(paramTypes[index],value);
             }
