@@ -1,4 +1,4 @@
-package com.tiny.tinyspringmvc;
+package com.tiny.springmvc;
 
 
 public class TinySpringmvcApplication {

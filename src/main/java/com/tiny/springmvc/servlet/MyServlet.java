@@ -1,4 +1,4 @@
-package com.tiny.tinyspringmvc.servlet;
+package com.tiny.springmvc.servlet;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;

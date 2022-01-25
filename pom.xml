@@ -18,6 +18,22 @@
     </properties>
     <dependencies>
         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>5.3.15</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>3.1.0</version>
@@ -67,7 +83,7 @@
                         <contextPath>/</contextPath>
                     </webApp>
                     <stopKey>CTRL+C</stopKey>
-                    <stopPort>8999</stopPort>
+                    <stopPort>8998</stopPort>
                     <scanIntervalSeconds>10</scanIntervalSeconds>
                     <scanTargets>
                         <scanTarget>src/main/webapp/WEB-INF/web.xml</scanTarget>
