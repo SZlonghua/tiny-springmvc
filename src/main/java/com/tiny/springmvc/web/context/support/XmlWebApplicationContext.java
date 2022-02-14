@@ -7,6 +7,7 @@ import org.springframework.beans.factory.xml.ResourceEntityResolver;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.ui.context.Theme;
 
+import javax.servlet.ServletConfig;
 import java.io.IOException;
 
 public class XmlWebApplicationContext extends AbstractRefreshableWebApplicationContext {

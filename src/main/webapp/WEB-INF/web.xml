@@ -14,11 +14,26 @@
     </listener>
 
     <servlet>
+        <servlet-name>mvc-dispatcher</servlet-name>
+        <servlet-class>com.tiny.springmvc.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:spring-mvc.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>mvc-dispatcher</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!--<servlet>
         <servlet-name>MyServlet</servlet-name>
         <servlet-class>com.tiny.springmvc.servlet.MyServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>MyServlet</servlet-name>
         <url-pattern>/MyServlet</url-pattern>
-    </servlet-mapping>
+    </servlet-mapping>-->
 </web-app>
