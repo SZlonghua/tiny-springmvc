@@ -9,7 +9,6 @@ public class DispatcherServlet extends FrameworkServlet {
     }
 
     protected void initStrategies(ApplicationContext context) {
-        //test
         /*initMultipartResolver(context);
         initLocaleResolver(context);
         initThemeResolver(context);
