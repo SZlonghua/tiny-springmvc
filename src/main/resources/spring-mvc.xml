@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="
 	 http://www.springframework.org/schema/beans
 	 http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+	 http://www.springframework.org/schema/mvc
+     http://www.springframework.org/schema/mvc/spring-mvc.xsd
 	 http://www.springframework.org/schema/context
 	 http://www.springframework.org/schema/context/spring-context.xsd">
 
@@ -25,5 +27,30 @@
             <value>.jsp</value>
         </property>
     </bean>-->
-    <bean class="com.test.springmvc.controller.UserController"></bean>
+   <!-- <bean class="com.test.springmvc.controller.UserController"></bean>-->
+
+    <!-- 使用基于注解的控制器，spring会自动扫描base-package下的子包和类，如果扫描到会把这些类注册为bean-->
+    <context:component-scan base-package="com.test.springmvc"/>
+
+
+    <!--  配置处理映射器和处理器适配器 在Spring4.0后，不配置，会默认加载-->
+    <!-- <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/> -->
+    <!-- <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"/> -->
+
+    <!-- 配置视图解析器，经过视图解析器后，视图的的完成路径为[prefix]+返回的视图字符串+[suffix] -->
+    <!--<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix">
+            <value>/WEB-INF/view/</value>
+        </property>
+        <property name="suffix">
+            <value>.jsp</value>
+        </property>
+    </bean>-->
+
+    <mvc:annotation-driven>
+        <!--<mvc:message-converters>
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter"/>
+            <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"/>
+        </mvc:message-converters>-->
+    </mvc:annotation-driven>
 </beans>

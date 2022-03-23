@@ -2,16 +2,33 @@ package com.tiny.springmvc.web.servlet;
 
 import com.tiny.springmvc.web.context.ConfigurableWebApplicationContext;
 import com.tiny.springmvc.web.context.WebApplicationContext;
+import com.tiny.springmvc.web.context.request.NativeWebRequest;
+import com.tiny.springmvc.web.context.request.RequestAttributes;
+import com.tiny.springmvc.web.context.request.RequestContextHolder;
+import com.tiny.springmvc.web.context.request.ServletRequestAttributes;
+import com.tiny.springmvc.web.context.request.async.CallableProcessingInterceptor;
+import com.tiny.springmvc.web.context.request.async.WebAsyncManager;
+import com.tiny.springmvc.web.context.request.async.WebAsyncUtils;
+import com.tiny.springmvc.web.context.support.ServletRequestHandledEvent;
 import com.tiny.springmvc.web.context.support.XmlWebApplicationContext;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.SourceFilteringListener;
+import org.springframework.context.i18n.LocaleContext;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.context.i18n.SimpleLocaleContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.security.Principal;
+import java.util.concurrent.Callable;
 
 public abstract class FrameworkServlet extends HttpServletBean implements ApplicationContextAware {
 
@@ -37,6 +54,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
     private final Object onRefreshMonitor = new Object();
 
     private boolean publishContext = true;
+
+    private boolean publishEvents = true;
 
     public static final String SERVLET_CONTEXT_PREFIX = FrameworkServlet.class.getName() + ".CONTEXT.";
 
@@ -190,5 +209,135 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
         public void onApplicationEvent(ContextRefreshedEvent event) {
             FrameworkServlet.this.onApplicationEvent(event);
         }
+    }
+
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+
+    protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        long startTime = System.currentTimeMillis();
+        Throwable failureCause = null;
+
+        LocaleContext previousLocaleContext = LocaleContextHolder.getLocaleContext();
+        LocaleContext localeContext = buildLocaleContext(request);
+
+        RequestAttributes previousAttributes = RequestContextHolder.getRequestAttributes();
+        ServletRequestAttributes requestAttributes = buildRequestAttributes(request, response, previousAttributes);
+
+        WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
+        asyncManager.registerCallableInterceptor(FrameworkServlet.class.getName(), new RequestBindingInterceptor());
+
+        initContextHolders(request, localeContext, requestAttributes);
+
+        try {
+            doService(request, response);
+        }
+        catch (ServletException | IOException ex) {
+            failureCause = ex;
+            throw ex;
+        }
+        catch (Throwable ex) {
+            failureCause = ex;
+            throw new ServletException("Request processing failed");
+        }
+
+        finally {
+            resetContextHolders(request, previousLocaleContext, previousAttributes);
+            if (requestAttributes != null) {
+                requestAttributes.requestCompleted();
+            }
+            publishRequestHandledEvent(request, response, startTime, failureCause);
+        }
+    }
+
+    @Nullable
+    public final WebApplicationContext getWebApplicationContext() {
+        return this.webApplicationContext;
+    }
+
+    protected abstract void doService(HttpServletRequest request, HttpServletResponse response)
+            throws Exception;
+
+    private void publishRequestHandledEvent(HttpServletRequest request, HttpServletResponse response,
+                                            long startTime, @Nullable Throwable failureCause) {
+
+        if (this.publishEvents && this.webApplicationContext != null) {
+            // Whether or not we succeeded, publish an event.
+            long processingTime = System.currentTimeMillis() - startTime;
+            HttpSession session = request.getSession(false);
+            Principal userPrincipal = request.getUserPrincipal();
+            this.webApplicationContext.publishEvent(
+                    new ServletRequestHandledEvent(this,
+                            request.getRequestURI(), request.getRemoteAddr(),
+                            request.getMethod(), getServletConfig().getServletName(),
+                            session != null ? session.getId() : null,
+                            userPrincipal != null ? userPrincipal.getName() : null,
+                            processingTime, failureCause, response.getStatus()));
+        }
+    }
+
+    private void resetContextHolders(HttpServletRequest request,
+                                     @Nullable LocaleContext prevLocaleContext, @Nullable RequestAttributes previousAttributes) {
+
+        LocaleContextHolder.setLocaleContext(prevLocaleContext, false);
+        RequestContextHolder.setRequestAttributes(previousAttributes, false);
+    }
+
+    private void initContextHolders(HttpServletRequest request,
+                                    @Nullable LocaleContext localeContext, @Nullable RequestAttributes requestAttributes) {
+
+        if (localeContext != null) {
+            LocaleContextHolder.setLocaleContext(localeContext, false);
+        }
+        if (requestAttributes != null) {
+            RequestContextHolder.setRequestAttributes(requestAttributes, false);
+        }
+    }
+    private class RequestBindingInterceptor implements CallableProcessingInterceptor {
+
+        @Override
+        public <T> void preProcess(NativeWebRequest webRequest, Callable<T> task) {
+            HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
+            if (request != null) {
+                HttpServletResponse response = webRequest.getNativeResponse(HttpServletResponse.class);
+                initContextHolders(request, buildLocaleContext(request),
+                        buildRequestAttributes(request, response, null));
+            }
+        }
+        @Override
+        public <T> void postProcess(NativeWebRequest webRequest, Callable<T> task, Object concurrentResult) {
+            HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
+            if (request != null) {
+                resetContextHolders(request, null, null);
+            }
+        }
+    }
+
+    @Nullable
+    protected ServletRequestAttributes buildRequestAttributes(HttpServletRequest request,
+                                                              @Nullable HttpServletResponse response, @Nullable RequestAttributes previousAttributes) {
+
+        if (previousAttributes == null || previousAttributes instanceof ServletRequestAttributes) {
+            return new ServletRequestAttributes(request, response);
+        }
+        else {
+            return null;  // preserve the pre-bound RequestAttributes instance
+        }
+    }
+
+    @Nullable
+    protected LocaleContext buildLocaleContext(HttpServletRequest request) {
+        return new SimpleLocaleContext(request.getLocale());
     }
 }
