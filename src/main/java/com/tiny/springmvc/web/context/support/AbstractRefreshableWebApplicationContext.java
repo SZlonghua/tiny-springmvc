@@ -1,6 +1,8 @@
 package com.tiny.springmvc.web.context.support;
 
 import com.tiny.springmvc.web.context.ConfigurableWebApplicationContext;
+import com.tiny.springmvc.web.context.ServletContextAware;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.support.AbstractRefreshableConfigApplicationContext;
 import org.springframework.lang.Nullable;
 import org.springframework.ui.context.Theme;
@@ -75,5 +77,15 @@ public abstract class AbstractRefreshableWebApplicationContext extends AbstractR
     @Nullable
     public Theme getTheme(String themeName) {
         return null;
+    }
+
+    @Override
+    protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+        beanFactory.addBeanPostProcessor(new ServletContextAwareProcessor(this.servletContext, this.servletConfig));
+        beanFactory.ignoreDependencyInterface(ServletContextAware.class);
+        /*beanFactory.ignoreDependencyInterface(ServletConfigAware.class);
+
+        WebApplicationContextUtils.registerWebApplicationScopes(beanFactory, this.servletContext);
+        WebApplicationContextUtils.registerEnvironmentBeans(beanFactory, this.servletContext, this.servletConfig);*/
     }
 }

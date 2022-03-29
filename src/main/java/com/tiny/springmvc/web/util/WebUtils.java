@@ -106,4 +106,8 @@ public class WebUtils {
         }
         return null;
     }
+
+    public static boolean isIncludeRequest(ServletRequest request) {
+        return (request.getAttribute(INCLUDE_REQUEST_URI_ATTRIBUTE) != null);
+    }
 }
